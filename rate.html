@@ -89,7 +89,9 @@
                     showNextSkin();
                     return;
                 }
-                if (!data.waitingFor.includes(getCurrentUser())) {
+                const meWaiting = data.waitingFor.includes(getCurrentUser());
+                const skinChanged = currentSkin && data.skin.image !== currentSkin.image;
+                if (!meWaiting || skinChanged) {
                     clearInterval(waitingInterval);
                     waitingInterval = null;
                     document.getElementById('wait-message').classList.add('hidden');
@@ -103,7 +105,7 @@
             const resp = await fetch('/api/sync/toggle', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({enabled: newVal})
+                body: JSON.stringify({enabled: newVal, user: getCurrentUser()})
             });
             const data = await resp.json();
             syncMode = data.enabled;
@@ -111,7 +113,11 @@
             const btn = document.getElementById('sync-toggle');
             if (btn) btn.textContent = syncMode ? 'SYNC ON' : 'SYNCH SESSION';
             if (syncMode) {
-                await fetchSyncSkin();
+                if (data.skin) {
+                    updateDomForSkin(data.skin);
+                } else {
+                    await fetchSyncSkin();
+                }
             } else {
                 showNextSkin();
             }
@@ -123,6 +129,10 @@
             setUserRatings(userRatings);
             const container = document.getElementById('rating-container');
             container.classList.add('rated');
+            if (waitingInterval) {
+                clearInterval(waitingInterval);
+                waitingInterval = null;
+            }
             if (syncMode) {
                 const resp = await fetch('/api/sync/rate', {
                     method: 'POST',
@@ -188,7 +198,7 @@
                 <button>Supreme</button>
                 <button>Perfect</button>
             </div>
-            <div id="wait-message" class="waiting-message hidden">Waiting for others...</div>
+            <div id="wait-message" class="waiting-message hidden"><span class="spinner"></span>Waiting for others...</div>
         </div>
         <div id="finished-container" class="finished" style="display:none;">
             <h2>All skins have been rated!</h2>
