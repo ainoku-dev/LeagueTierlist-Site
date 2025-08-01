@@ -10,6 +10,7 @@
     <script>
         const USERS = ['User1','User2','User3','User4'];
         const RATING_LABELS = ['Dogshit','Cringe','Basic','Awesome','Supreme','Perfect'];
+        let viewMode = 'avg';
         function getCurrentUser() {
             return localStorage.getItem('currentUser');
         }
@@ -56,12 +57,20 @@
         function ratingToLabel(num) {
             return RATING_LABELS[num] ?? 'Unrated';
         }
+        function getRatingForSkin(skin) {
+            if (viewMode === "avg") {
+                return skin.avgRating;
+            }
+            const ratings = getUserRatings();
+            const r = ratings[skin.image];
+            return typeof r === "number" ? r : -1;
+        }
         // Compute the average rating for a skin across all users.
         function computeAverage(imageKey) {
             let sum = 0;
             let count = 0;
             for (const user of USERS) {
-                const storeKey = 'ratings_' + user;
+                const storeKey = "ratings_" + user;
                 let ratings = {};
                 try {
                     ratings = JSON.parse(localStorage.getItem(storeKey)) || {};
@@ -69,83 +78,90 @@
                     ratings = {};
                 }
                 const r = ratings[imageKey];
-                if (typeof r === 'number') {
-                    sum += r;
+                if (r !== undefined && r !== null && !isNaN(Number(r))) {
+                    sum += Number(r);
                     count += 1;
                 }
             }
-            if (count === 0) return -1;
-            return sum / count;
+            return count ? sum / count : -1;
         }
         // Generate the HTML grid based on data and insert into the DOM.
         async function populateGrid() {
-            const grid = document.getElementById('skin-grid');
-            grid.innerHTML = '';
-            // Use the globally loaded skins array
+            const container = document.getElementById("skin-grid");
+            container.innerHTML = "";
             const skins = window.SKINS_DATA || [];
-            // Populate champion selector once
-            const champSelect = document.getElementById('champ-select');
+            const champSelect = document.getElementById("champ-select");
             if (champSelect && champSelect.options.length <= 1) {
                 const champs = [...new Set(skins.map(s => s.champion))].sort();
                 champs.forEach(c => {
-                    const opt = document.createElement('option');
+                    const opt = document.createElement("option");
                     opt.value = c;
                     opt.textContent = c;
                     champSelect.appendChild(opt);
                 });
             }
-            // Augment each skin with average rating and number of ratings
-            skins.forEach((skin) => {
-                const avg = computeAverage(skin.image);
-                skin.avgRating = avg;
-                skin.numRatings = USERS.reduce((count, user) => {
-                    const ratings = JSON.parse(localStorage.getItem('ratings_' + user) || '{}');
-                    return count + (ratings[skin.image] !== undefined ? 1 : 0);
-                }, 0);
+            const userRatings = getUserRatings();
+            skins.forEach(skin => {
+                skin.avgRating = computeAverage(skin.image);
+                skin.userRating = userRatings[skin.image];
             });
-            // Sort descending by average rating; unrated items (-1) at the end
-            skins.sort((a, b) => {
-                const aVal = a.avgRating;
-                const bVal = b.avgRating;
-                if (aVal === -1 && bVal === -1) return 0;
-                if (aVal === -1) return 1;
-                if (bVal === -1) return -1;
-                if (bVal === aVal) return 0;
-                return bVal - aVal;
+            const groups = {5:[],4:[],3:[],2:[],1:[],0:[],unrated:[]};
+            skins.forEach(skin => {
+                const r = getRatingForSkin(skin);
+                const key = r >= 0 ? Math.round(r) : "unrated";
+                groups[key].push(skin);
             });
-            // Create DOM elements for each skin
-            for (const skin of skins) {
-                const card = document.createElement('div');
-                card.className = 'skin-card';
-                const reset = document.createElement('button');
-                reset.textContent = 'Reset';
-                reset.className = 'secondary-button reset-btn';
-                reset.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    resetSkin(skin.image);
+            const order = [5,4,3,2,1,0,"unrated"];
+            for (const key of order) {
+                const arr = groups[key];
+                if (!arr.length) continue;
+                const groupDiv = document.createElement("div");
+                groupDiv.className = "rating-group";
+                const h = document.createElement("h3");
+                h.textContent = key === "unrated" ? "Unrated" : ratingToLabel(key);
+                groupDiv.appendChild(h);
+                const grid = document.createElement("div");
+                grid.className = "grid-container";
+                arr.forEach(skin => {
+                    const card = document.createElement("div");
+                    card.className = "skin-card";
+                    const reset = document.createElement("button");
+                    reset.textContent = "Reset";
+                    reset.className = "secondary-button reset-btn";
+                    reset.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        resetSkin(skin.image);
+                    });
+                    card.appendChild(reset);
+                    const img = document.createElement("img");
+                    img.src = skin.image;
+                    img.alt = `${skin.champion} – ${skin.skin}`;
+                    img.loading = "lazy";
+                    card.appendChild(img);
+                    const info = document.createElement("div");
+                    info.className = "skin-info";
+                    const nameDiv = document.createElement("div");
+                    nameDiv.textContent = `${skin.champion} – ${skin.skin}`;
+                    const ratingDiv = document.createElement("div");
+                    const val = getRatingForSkin(skin);
+                    if (val === -1) {
+                        ratingDiv.textContent = viewMode === "avg" ? "Average: Unrated" : "Your Rating: Unrated";
+                    } else {
+                        const rounded = Math.round(val);
+                        const label = ratingToLabel(rounded);
+                        if (viewMode === "avg") {
+                            ratingDiv.textContent = `Average: ${label} (${val.toFixed(2)})`;
+                        } else {
+                            ratingDiv.textContent = `Your Rating: ${label}`;
+                        }
+                    }
+                    info.appendChild(nameDiv);
+                    info.appendChild(ratingDiv);
+                    card.appendChild(info);
+                    grid.appendChild(card);
                 });
-                card.appendChild(reset);
-                const img = document.createElement('img');
-                img.src = skin.image;
-                img.alt = `${skin.champion} – ${skin.skin}`;
-                img.loading = 'lazy';
-                card.appendChild(img);
-                const info = document.createElement('div');
-                info.className = 'skin-info';
-                const nameDiv = document.createElement('div');
-                nameDiv.textContent = `${skin.champion} – ${skin.skin}`;
-                const ratingDiv = document.createElement('div');
-                if (skin.avgRating === -1) {
-                    ratingDiv.textContent = 'Average: Unrated';
-                } else {
-                    const avgValue = skin.avgRating;
-                    const rounded = Math.round(avgValue);
-                    ratingDiv.textContent = `Average: ${ratingToLabel(rounded)} (${avgValue.toFixed(2)})`;
-                }
-                info.appendChild(nameDiv);
-                info.appendChild(ratingDiv);
-                card.appendChild(info);
-                grid.appendChild(card);
+                groupDiv.appendChild(grid);
+                container.appendChild(groupDiv);
             }
         }
         window.addEventListener('DOMContentLoaded', () => {
@@ -158,6 +174,15 @@
                 resetAllBtn.addEventListener('click', resetAll);
             }
             const resetChampBtn = document.getElementById('reset-champ');
+            const toggleBtn = document.getElementById("toggle-view");
+            if (toggleBtn) {
+                toggleBtn.textContent = viewMode === "avg" ? "Show My Ratings" : "Show Averages";
+                toggleBtn.addEventListener("click", () => {
+                    viewMode = viewMode === "avg" ? "user" : "avg";
+                    toggleBtn.textContent = viewMode === "avg" ? "Show My Ratings" : "Show Averages";
+                    populateGrid();
+                });
+            }
             if (resetChampBtn) {
                 resetChampBtn.addEventListener('click', () => {
                     const sel = document.getElementById('champ-select');
@@ -176,6 +201,7 @@
         </select>
         <button id="reset-champ" class="secondary-button">Reset Champ</button>
         <button id="reset-all" class="secondary-button">Reset All</button>
+        <button id="toggle-view" class="secondary-button">Show My Ratings</button>
         <button onclick="logout()" class="secondary-button">LOGOUT</button>
     </header>
     <main class="tierlist-main">
