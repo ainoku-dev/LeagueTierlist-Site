@@ -89,7 +89,9 @@
                     showNextSkin();
                     return;
                 }
-                if (!data.waitingFor.includes(getCurrentUser())) {
+                const skinChanged = data.skin && currentSkin && data.skin.image !== currentSkin.image;
+                const notWaiting = !data.waitingFor.includes(getCurrentUser());
+                if (skinChanged || notWaiting) {
                     clearInterval(waitingInterval);
                     waitingInterval = null;
                     document.getElementById('wait-message').classList.add('hidden');
