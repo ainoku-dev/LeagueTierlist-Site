@@ -14,7 +14,8 @@ const USERS = ['User1', 'User2', 'User3', 'User4'];
 const syncState = {
   enabled: false,
   current: null,
-  waiting: new Set()
+  waiting: new Set(),
+  participants: new Set(),
 };
 
 function pickRandomSkin() {
@@ -22,14 +23,25 @@ function pickRandomSkin() {
 }
 
 app.post('/api/sync/toggle', (req, res) => {
-  const { enabled } = req.body;
-  syncState.enabled = !!enabled;
-  if (syncState.enabled) {
-    syncState.current = pickRandomSkin();
-    syncState.waiting = new Set(USERS);
+  const { enabled, user } = req.body;
+  if (enabled) {
+    if (!syncState.enabled) {
+      syncState.enabled = true;
+      syncState.current = pickRandomSkin();
+      syncState.participants = new Set([user]);
+      syncState.waiting = new Set([user]);
+    } else {
+      syncState.participants.add(user);
+      syncState.waiting.add(user);
+    }
   } else {
-    syncState.current = null;
-    syncState.waiting.clear();
+    syncState.participants.delete(user);
+    syncState.waiting.delete(user);
+    if (syncState.participants.size === 0) {
+      syncState.enabled = false;
+      syncState.current = null;
+      syncState.waiting.clear();
+    }
   }
   res.json({ enabled: syncState.enabled });
 });
@@ -45,7 +57,7 @@ app.post('/api/sync/rate', (req, res) => {
   syncState.waiting.delete(user);
   if (syncState.waiting.size === 0) {
     syncState.current = pickRandomSkin();
-    syncState.waiting = new Set(USERS);
+    syncState.waiting = new Set(syncState.participants);
     return res.json({ enabled: true, nextSkin: syncState.current });
   }
   res.json({ enabled: true, waiting: true });
