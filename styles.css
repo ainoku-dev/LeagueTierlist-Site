@@ -229,6 +229,11 @@ button:hover {
     background-color: #484f58;
 }
 
+.waiting-message {
+    margin-top: 0.5rem;
+    font-weight: bold;
+}
+
 .finished {
     text-align: center;
 }

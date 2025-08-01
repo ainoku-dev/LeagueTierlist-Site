@@ -13,6 +13,8 @@
         let skinsData = [];
         let pending = [];
         let currentSkin = null;
+        let syncMode = false;
+        let waitingInterval = null;
 
         function getCurrentUser() {
             return localStorage.getItem('currentUser');
@@ -39,51 +41,131 @@
             const userRatings = getUserRatings();
             // Filter out skins already rated
             pending = skinsData.filter(skin => !(skin.image in userRatings));
-            showNextSkin();
+        }
+        function updateDomForSkin(skin) {
+            currentSkin = skin;
+            const img = document.getElementById('skin-image');
+            const title = document.getElementById('skin-title');
+            img.src = skin.image;
+            img.alt = `${skin.champion} – ${skin.skin}`;
+            title.textContent = `${skin.champion} – ${skin.skin}`;
         }
         function showNextSkin() {
             const container = document.getElementById('rating-container');
             const finishedDiv = document.getElementById('finished-container');
             if (pending.length === 0) {
-                // Completed all ratings
                 container.style.display = 'none';
                 finishedDiv.style.display = 'block';
                 return;
             }
-            // Reset any animation classes
             container.classList.remove('rated');
-            // Pick a random index
             const idx = Math.floor(Math.random() * pending.length);
-            currentSkin = pending.splice(idx, 1)[0];
-            // Update DOM
-            const img = document.getElementById('skin-image');
-            const title = document.getElementById('skin-title');
-            img.src = currentSkin.image;
-            img.alt = `${currentSkin.champion} – ${currentSkin.skin}`;
-            title.textContent = `${currentSkin.champion} – ${currentSkin.skin}`;
+            const skin = pending.splice(idx, 1)[0];
+            updateDomForSkin(skin);
         }
-        function rateSkin(ratingValue) {
+
+        async function fetchSyncSkin() {
+            const resp = await fetch('/api/sync/current');
+            const data = await resp.json();
+            if (!data.enabled) {
+                syncMode = false;
+                localStorage.setItem('syncMode', 'false');
+                showNextSkin();
+                return;
+            }
+            updateDomForSkin(data.skin);
+        }
+
+        function startPolling() {
+            if (waitingInterval) return;
+            waitingInterval = setInterval(async () => {
+                const resp = await fetch('/api/sync/current');
+                const data = await resp.json();
+                if (!data.enabled) {
+                    clearInterval(waitingInterval);
+                    waitingInterval = null;
+                    syncMode = false;
+                    localStorage.setItem('syncMode', 'false');
+                    showNextSkin();
+                    return;
+                }
+                if (!data.waitingFor.includes(getCurrentUser())) {
+                    clearInterval(waitingInterval);
+                    waitingInterval = null;
+                    document.getElementById('wait-message').classList.add('hidden');
+                    updateDomForSkin(data.skin);
+                }
+            }, 1000);
+        }
+
+        async function toggleSync() {
+            const newVal = !syncMode;
+            const resp = await fetch('/api/sync/toggle', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({enabled: newVal})
+            });
+            const data = await resp.json();
+            syncMode = data.enabled;
+            localStorage.setItem('syncMode', syncMode);
+            const btn = document.getElementById('sync-toggle');
+            if (btn) btn.textContent = syncMode ? 'SYNC ON' : 'SYNCH SESSION';
+            if (syncMode) {
+                await fetchSyncSkin();
+            } else {
+                showNextSkin();
+            }
+        }
+        async function rateSkin(ratingValue) {
             if (!currentSkin) return;
-            // Save rating to localStorage
             const userRatings = getUserRatings();
             userRatings[currentSkin.image] = ratingValue;
             setUserRatings(userRatings);
-            // Animate the card: add class and delay next
             const container = document.getElementById('rating-container');
             container.classList.add('rated');
-            // Wait for animation to finish then show next
-            setTimeout(() => {
-                showNextSkin();
-            }, 400);
+            if (syncMode) {
+                const resp = await fetch('/api/sync/rate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({user: getCurrentUser(), rating: ratingValue})
+                });
+                const data = await resp.json();
+                setTimeout(() => {
+                    container.classList.remove('rated');
+                    if (data.nextSkin) {
+                        updateDomForSkin(data.nextSkin);
+                    } else if (data.waiting) {
+                        document.getElementById('wait-message').classList.remove('hidden');
+                        startPolling();
+                    } else {
+                        showNextSkin();
+                    }
+                }, 400);
+            } else {
+                setTimeout(() => {
+                    container.classList.remove('rated');
+                    showNextSkin();
+                }, 400);
+            }
         }
         window.addEventListener('DOMContentLoaded', () => {
-            // Attach event listeners to rating buttons
             const buttons = document.querySelectorAll('.rating-buttons button');
             buttons.forEach((btn, idx) => {
                 btn.addEventListener('click', () => rateSkin(idx));
             });
-            // Start loading skins
-            loadSkins();
+            const toggleBtn = document.getElementById('sync-toggle');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', toggleSync);
+                syncMode = localStorage.getItem('syncMode') === 'true';
+                toggleBtn.textContent = syncMode ? 'SYNC ON' : 'SYNCH SESSION';
+            }
+            loadSkins().then(() => {
+                if (syncMode) {
+                    fetchSyncSkin();
+                } else {
+                    showNextSkin();
+                }
+            });
         });
     </script>
 </head>
@@ -91,6 +173,7 @@
     <header class="rate-header">
         <button onclick="window.location.href='tierlist.html'" class="secondary-button">Back to Tierlist</button>
         <button onclick="logout()" class="secondary-button">LOGOUT</button>
+        <button id="sync-toggle" class="secondary-button">SYNCH SESSION</button>
     </header>
     <main class="rate-main">
         <div id="rating-container" class="rating-card">
@@ -105,6 +188,7 @@
                 <button>Supreme</button>
                 <button>Perfect</button>
             </div>
+            <div id="wait-message" class="waiting-message hidden">Waiting for others...</div>
         </div>
         <div id="finished-container" class="finished" style="display:none;">
             <h2>All skins have been rated!</h2>
