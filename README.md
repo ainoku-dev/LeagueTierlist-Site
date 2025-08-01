@@ -16,3 +16,16 @@ npm start
 
 The application will be available at http://localhost:3000 (or the port set in
 `PORT`). The server simply serves the static files in this repository.
+
+## Exposing with ngrok
+
+To share the development server over the internet you can use [ngrok](https://ngrok.com/).
+After installing ngrok and logging in, run the following command in a separate
+terminal after starting the server:
+
+```bash
+ngrok http --url=complete-sloth-ultimately.ngrok-free.app 3000
+```
+
+This will make the site available at
+`https://complete-sloth-ultimately.ngrok-free.app`.
