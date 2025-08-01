@@ -1,0 +1,12 @@
+{
+  "name": "league-tierlist-site",
+  "version": "1.0.0",
+  "description": "Basic Node.js server for League Tierlist site",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
