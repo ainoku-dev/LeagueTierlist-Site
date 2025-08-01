@@ -1,0 +1,221 @@
+/*
+ * Stylesheet for the League Tierlist web application.
+ * This file defines the look and feel of all pages including
+ * the login screen, menu, tier list and rating pages. The
+ * colours are chosen to evoke a dark gaming aesthetic.
+ */
+
+/* Global styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #0d1117;
+    color: #c9d1d9;
+}
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button {
+    font-size: 1rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+button:hover {
+    filter: brightness(1.1);
+}
+
+.primary-button {
+    background-color: #238636;
+    color: #fff;
+}
+.primary-button:hover {
+    background-color: #2ea043;
+}
+
+.secondary-button {
+    background-color: #30363d;
+    color: #c9d1d9;
+}
+.secondary-button:hover {
+    background-color: #484f58;
+}
+
+/* Login page */
+.login-page .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+}
+.login-page .title {
+    margin-bottom: 2rem;
+    font-size: 2rem;
+}
+.login-page .login-buttons button {
+    display: block;
+    width: 200px;
+    margin: 0.5rem auto;
+    background-color: #30363d;
+    color: #c9d1d9;
+}
+.login-page .login-buttons button:hover {
+    background-color: #484f58;
+}
+
+/* Menu page */
+.menu-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+.menu-header {
+    padding: 1rem;
+    background-color: #161b22;
+    text-align: center;
+    border-bottom: 1px solid #30363d;
+}
+.menu-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.menu-main .primary-button {
+    font-size: 1.5rem;
+    padding: 1rem 2rem;
+}
+
+/* Tierlist page */
+.tierlist-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+.tierlist-header {
+    padding: 1rem;
+    background-color: #161b22;
+    text-align: right;
+    border-bottom: 1px solid #30363d;
+}
+.tierlist-header .primary-button {
+    font-size: 1rem;
+}
+.tierlist-main {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+}
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+.skin-card {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+.skin-card img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    display: block;
+}
+.skin-info {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+}
+.skin-info div:first-child {
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+.skin-info div:last-child {
+    font-size: 0.8rem;
+    color: #8b949e;
+}
+
+/* Rate page */
+.rate-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+.rate-header {
+    padding: 1rem;
+    background-color: #161b22;
+    border-bottom: 1px solid #30363d;
+}
+.rate-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+.rating-card {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 1rem;
+    max-width: 450px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    transition: transform 0.4s ease, opacity 0.4s ease;
+}
+.rating-card.rated {
+    transform: translateY(20px);
+    opacity: 0;
+}
+.rating-card h2 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+.rating-image {
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+.rating-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.rating-buttons button {
+    background-color: #30363d;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    padding: 0.4rem;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.rating-buttons button:hover {
+    background-color: #484f58;
+}
+
+.finished {
+    text-align: center;
+}
+.finished h2 {
+    margin-bottom: 0.5rem;
+}
+
+/* Utility classes */
+.hidden {
+    display: none !important;
+}

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>League Tierlist – Rate Skins</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Load the skin data script first. -->
+    <script src="skins_data.js"></script>
+    <script>
+        const USERS = ['User1','User2','User3','User4'];
+        const RATING_LABELS = ['Dogshit','Cringe','Basic','Awesome','Supreme','Perfect'];
+        let skinsData = [];
+        let pending = [];
+        let currentSkin = null;
+
+        function getCurrentUser() {
+            return localStorage.getItem('currentUser');
+        }
+        function getUserRatings() {
+            const key = 'ratings_' + getCurrentUser();
+            try {
+                return JSON.parse(localStorage.getItem(key)) || {};
+            } catch(err) {
+                return {};
+            }
+        }
+        function setUserRatings(ratings) {
+            const key = 'ratings_' + getCurrentUser();
+            localStorage.setItem(key, JSON.stringify(ratings));
+        }
+        async function loadSkins() {
+            // Use globally defined skin data array
+            skinsData = window.SKINS_DATA || [];
+            const userRatings = getUserRatings();
+            // Filter out skins already rated
+            pending = skinsData.filter(skin => !(skin.image in userRatings));
+            showNextSkin();
+        }
+        function showNextSkin() {
+            const container = document.getElementById('rating-container');
+            const finishedDiv = document.getElementById('finished-container');
+            if (pending.length === 0) {
+                // Completed all ratings
+                container.style.display = 'none';
+                finishedDiv.style.display = 'block';
+                return;
+            }
+            // Reset any animation classes
+            container.classList.remove('rated');
+            // Pick a random index
+            const idx = Math.floor(Math.random() * pending.length);
+            currentSkin = pending.splice(idx, 1)[0];
+            // Update DOM
+            const img = document.getElementById('skin-image');
+            const title = document.getElementById('skin-title');
+            img.src = currentSkin.image;
+            img.alt = `${currentSkin.champion} – ${currentSkin.skin}`;
+            title.textContent = `${currentSkin.champion} – ${currentSkin.skin}`;
+        }
+        function rateSkin(ratingValue) {
+            if (!currentSkin) return;
+            // Save rating to localStorage
+            const userRatings = getUserRatings();
+            userRatings[currentSkin.image] = ratingValue;
+            setUserRatings(userRatings);
+            // Animate the card: add class and delay next
+            const container = document.getElementById('rating-container');
+            container.classList.add('rated');
+            // Wait for animation to finish then show next
+            setTimeout(() => {
+                showNextSkin();
+            }, 400);
+        }
+        window.addEventListener('DOMContentLoaded', () => {
+            // Attach event listeners to rating buttons
+            const buttons = document.querySelectorAll('.rating-buttons button');
+            buttons.forEach((btn, idx) => {
+                btn.addEventListener('click', () => rateSkin(idx));
+            });
+            // Start loading skins
+            loadSkins();
+        });
+    </script>
+</head>
+<body class="rate-page">
+    <header class="rate-header">
+        <button onclick="window.location.href='tierlist.html'" class="secondary-button">Back to Tierlist</button>
+    </header>
+    <main class="rate-main">
+        <div id="rating-container" class="rating-card">
+            <h2 id="skin-title"></h2>
+            <img id="skin-image" src="" alt="Skin" class="rating-image">
+            <div class="rating-buttons">
+                <!-- Buttons for each rating label -->
+                <button>Dogshit</button>
+                <button>Cringe</button>
+                <button>Basic</button>
+                <button>Awesome</button>
+                <button>Supreme</button>
+                <button>Perfect</button>
+            </div>
+        </div>
+        <div id="finished-container" class="finished" style="display:none;">
+            <h2>All skins have been rated!</h2>
+            <p>Great job. You can return to the tier list now.</p>
+            <button class="primary-button" onclick="window.location.href='tierlist.html'">Return to Tier List</button>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>League Tierlist – List</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Load the skin data. This script defines `window.SKINS_DATA` containing the array of skins. -->
+    <script src="skins_data.js"></script>
+    <script>
+        const USERS = ['User1','User2','User3','User4'];
+        const RATING_LABELS = ['Dogshit','Cringe','Basic','Awesome','Supreme','Perfect'];
+        // Convert a numeric rating (0–5) to its textual label.
+        function ratingToLabel(num) {
+            return RATING_LABELS[num] ?? 'Unrated';
+        }
+        // Compute the average rating for a skin across all users.
+        function computeAverage(imageKey) {
+            let sum = 0;
+            let count = 0;
+            for (const user of USERS) {
+                const storeKey = 'ratings_' + user;
+                let ratings = {};
+                try {
+                    ratings = JSON.parse(localStorage.getItem(storeKey)) || {};
+                } catch (err) {
+                    ratings = {};
+                }
+                const r = ratings[imageKey];
+                if (typeof r === 'number') {
+                    sum += r;
+                    count += 1;
+                }
+            }
+            if (count === 0) return -1;
+            return sum / count;
+        }
+        // Generate the HTML grid based on data and insert into the DOM.
+        async function populateGrid() {
+            const grid = document.getElementById('skin-grid');
+            // Use the globally loaded skins array
+            const skins = window.SKINS_DATA || [];
+            // Augment each skin with average rating and number of ratings
+            skins.forEach((skin) => {
+                const avg = computeAverage(skin.image);
+                skin.avgRating = avg;
+                skin.numRatings = USERS.reduce((count, user) => {
+                    const ratings = JSON.parse(localStorage.getItem('ratings_' + user) || '{}');
+                    return count + (ratings[skin.image] !== undefined ? 1 : 0);
+                }, 0);
+            });
+            // Sort descending by average rating; unrated items (-1) at the end
+            skins.sort((a, b) => {
+                const aVal = a.avgRating;
+                const bVal = b.avgRating;
+                if (aVal === -1 && bVal === -1) return 0;
+                if (aVal === -1) return 1;
+                if (bVal === -1) return -1;
+                if (bVal === aVal) return 0;
+                return bVal - aVal;
+            });
+            // Create DOM elements for each skin
+            for (const skin of skins) {
+                const card = document.createElement('div');
+                card.className = 'skin-card';
+                const img = document.createElement('img');
+                img.src = skin.image;
+                img.alt = `${skin.champion} – ${skin.skin}`;
+                img.loading = 'lazy';
+                card.appendChild(img);
+                const info = document.createElement('div');
+                info.className = 'skin-info';
+                const nameDiv = document.createElement('div');
+                nameDiv.textContent = `${skin.champion} – ${skin.skin}`;
+                const ratingDiv = document.createElement('div');
+                if (skin.avgRating === -1) {
+                    ratingDiv.textContent = 'Average: Unrated';
+                } else {
+                    const avgValue = skin.avgRating;
+                    const rounded = Math.round(avgValue);
+                    ratingDiv.textContent = `Average: ${ratingToLabel(rounded)} (${avgValue.toFixed(2)})`;
+                }
+                info.appendChild(nameDiv);
+                info.appendChild(ratingDiv);
+                card.appendChild(info);
+                grid.appendChild(card);
+            }
+        }
+        window.addEventListener('DOMContentLoaded', () => {
+            const startButton = document.getElementById('start-rating');
+            startButton.addEventListener('click', () => {
+                window.location.href = 'rate.html';
+            });
+            populateGrid();
+        });
+    </script>
+</head>
+<body class="tierlist-page">
+    <header class="tierlist-header">
+        <button id="start-rating" class="primary-button">START RATING</button>
+    </header>
+    <main class="tierlist-main">
+        <div id="skin-grid" class="grid-container"></div>
+    </main>
+</body>
+</html>

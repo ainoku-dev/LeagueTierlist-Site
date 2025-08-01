@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>League Tierlist – Login</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        /**
+         * Stores the selected user in localStorage and initializes the
+         * ratings object for that user if it doesn't exist. After
+         * storing the user, the browser is redirected to the menu page.
+         *
+         * @param {string} userName The name of the user (e.g. "User1").
+         */
+        function selectUser(userName) {
+            // Persist the currently selected user
+            localStorage.setItem('currentUser', userName);
+            // Initialise the ratings store if missing
+            const key = 'ratings_' + userName;
+            if (!localStorage.getItem(key)) {
+                localStorage.setItem(key, JSON.stringify({}));
+            }
+            // Go to the menu page
+            window.location.href = 'menu.html';
+        }
+    </script>
+</head>
+<body class="login-page">
+    <div class="container">
+        <h1 class="title">Select your user</h1>
+        <div class="login-buttons">
+            <button onclick="selectUser('User1')">User1</button>
+            <button onclick="selectUser('User2')">User2</button>
+            <button onclick="selectUser('User3')">User3</button>
+            <button onclick="selectUser('User4')">User4</button>
+        </div>
+    </div>
+</body>
+</html>

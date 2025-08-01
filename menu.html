@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>League Tierlist – Menu</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        // When the page loads we populate the user name in the header.
+        window.addEventListener('DOMContentLoaded', () => {
+            const headerUserSpan = document.getElementById('header-user');
+            const userName = localStorage.getItem('currentUser');
+            if (userName && headerUserSpan) {
+                headerUserSpan.textContent = userName;
+            }
+        });
+        function goToTierlist() {
+            window.location.href = 'tierlist.html';
+        }
+    </script>
+</head>
+<body class="menu-page">
+    <header class="menu-header">
+        <h2>Welcome, <span id="header-user">User</span>!</h2>
+    </header>
+    <main class="menu-main">
+        <button class="primary-button" onclick="goToTierlist()">LEAGUE TIERLIST</button>
+    </main>
+</body>
+</html>
