@@ -10,6 +10,48 @@
     <script>
         const USERS = ['User1','User2','User3','User4'];
         const RATING_LABELS = ['Dogshit','Cringe','Basic','Awesome','Supreme','Perfect'];
+        function getCurrentUser() {
+            return localStorage.getItem('currentUser');
+        }
+        function getUserRatings() {
+            const key = 'ratings_' + getCurrentUser();
+            try {
+                return JSON.parse(localStorage.getItem(key)) || {};
+            } catch (err) {
+                return {};
+            }
+        }
+        function setUserRatings(ratings) {
+            const key = 'ratings_' + getCurrentUser();
+            localStorage.setItem(key, JSON.stringify(ratings));
+        }
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
+        function resetAll() {
+            if (!confirm('Reset all ratings?')) return;
+            setUserRatings({});
+            populateGrid();
+        }
+        function resetChampion(champ) {
+            if (!champ) return;
+            if (!confirm(`Reset ratings for ${champ}?`)) return;
+            const ratings = getUserRatings();
+            (window.SKINS_DATA || []).forEach(s => {
+                if (s.champion === champ) delete ratings[s.image];
+            });
+            setUserRatings(ratings);
+            populateGrid();
+        }
+        function resetSkin(imageKey) {
+            const ratings = getUserRatings();
+            if (ratings[imageKey] !== undefined) {
+                delete ratings[imageKey];
+                setUserRatings(ratings);
+                populateGrid();
+            }
+        }
         // Convert a numeric rating (0–5) to its textual label.
         function ratingToLabel(num) {
             return RATING_LABELS[num] ?? 'Unrated';
@@ -38,8 +80,20 @@
         // Generate the HTML grid based on data and insert into the DOM.
         async function populateGrid() {
             const grid = document.getElementById('skin-grid');
+            grid.innerHTML = '';
             // Use the globally loaded skins array
             const skins = window.SKINS_DATA || [];
+            // Populate champion selector once
+            const champSelect = document.getElementById('champ-select');
+            if (champSelect && champSelect.options.length <= 1) {
+                const champs = [...new Set(skins.map(s => s.champion))].sort();
+                champs.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    champSelect.appendChild(opt);
+                });
+            }
             // Augment each skin with average rating and number of ratings
             skins.forEach((skin) => {
                 const avg = computeAverage(skin.image);
@@ -63,6 +117,14 @@
             for (const skin of skins) {
                 const card = document.createElement('div');
                 card.className = 'skin-card';
+                const reset = document.createElement('button');
+                reset.textContent = 'Reset';
+                reset.className = 'secondary-button reset-btn';
+                reset.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    resetSkin(skin.image);
+                });
+                card.appendChild(reset);
                 const img = document.createElement('img');
                 img.src = skin.image;
                 img.alt = `${skin.champion} – ${skin.skin}`;
@@ -91,6 +153,17 @@
             startButton.addEventListener('click', () => {
                 window.location.href = 'rate.html';
             });
+            const resetAllBtn = document.getElementById('reset-all');
+            if (resetAllBtn) {
+                resetAllBtn.addEventListener('click', resetAll);
+            }
+            const resetChampBtn = document.getElementById('reset-champ');
+            if (resetChampBtn) {
+                resetChampBtn.addEventListener('click', () => {
+                    const sel = document.getElementById('champ-select');
+                    resetChampion(sel ? sel.value : '');
+                });
+            }
             populateGrid();
         });
     </script>
@@ -98,6 +171,12 @@
 <body class="tierlist-page">
     <header class="tierlist-header">
         <button id="start-rating" class="primary-button">START RATING</button>
+        <select id="champ-select">
+            <option value="">Select Champion</option>
+        </select>
+        <button id="reset-champ" class="secondary-button">Reset Champ</button>
+        <button id="reset-all" class="secondary-button">Reset All</button>
+        <button onclick="logout()" class="secondary-button">LOGOUT</button>
     </header>
     <main class="tierlist-main">
         <div id="skin-grid" class="grid-container"></div>

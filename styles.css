@@ -77,7 +77,9 @@ button:hover {
 .menu-header {
     padding: 1rem;
     background-color: #161b22;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     border-bottom: 1px solid #30363d;
 }
 .menu-main {
@@ -100,7 +102,10 @@ button:hover {
 .tierlist-header {
     padding: 1rem;
     background-color: #161b22;
-    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
     border-bottom: 1px solid #30363d;
 }
 .tierlist-header .primary-button {
@@ -121,6 +126,7 @@ button:hover {
     border: 1px solid #30363d;
     border-radius: 8px;
     overflow: hidden;
+    position: relative;
     display: flex;
     flex-direction: column;
     box-shadow: 0 2px 4px rgba(0,0,0,0.4);
@@ -144,6 +150,18 @@ button:hover {
     color: #8b949e;
 }
 
+.reset-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: none;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+}
+.skin-card:hover .reset-btn {
+    display: block;
+}
+
 /* Rate page */
 .rate-page {
     display: flex;
@@ -153,6 +171,9 @@ button:hover {
 .rate-header {
     padding: 1rem;
     background-color: #161b22;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     border-bottom: 1px solid #30363d;
 }
 .rate-main {
@@ -167,7 +188,7 @@ button:hover {
     border: 1px solid #30363d;
     border-radius: 8px;
     padding: 1rem;
-    max-width: 450px;
+    max-width: 600px;
     text-align: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.4);
     transition: transform 0.4s ease, opacity 0.4s ease;
@@ -184,7 +205,7 @@ button:hover {
 .rating-image {
     width: 100%;
     height: auto;
-    max-height: 300px;
+    max-height: 450px;
     object-fit: contain;
     border-radius: 4px;
     margin-bottom: 1rem;

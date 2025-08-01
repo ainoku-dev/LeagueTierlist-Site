@@ -17,11 +17,16 @@
         function goToTierlist() {
             window.location.href = 'tierlist.html';
         }
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
     </script>
 </head>
 <body class="menu-page">
     <header class="menu-header">
         <h2>Welcome, <span id="header-user">User</span>!</h2>
+        <button onclick="logout()" class="secondary-button">LOGOUT</button>
     </header>
     <main class="menu-main">
         <button class="primary-button" onclick="goToTierlist()">LEAGUE TIERLIST</button>

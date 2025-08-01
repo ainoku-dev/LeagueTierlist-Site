@@ -29,6 +29,10 @@
             const key = 'ratings_' + getCurrentUser();
             localStorage.setItem(key, JSON.stringify(ratings));
         }
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
         async function loadSkins() {
             // Use globally defined skin data array
             skinsData = window.SKINS_DATA || [];
@@ -86,6 +90,7 @@
 <body class="rate-page">
     <header class="rate-header">
         <button onclick="window.location.href='tierlist.html'" class="secondary-button">Back to Tierlist</button>
+        <button onclick="logout()" class="secondary-button">LOGOUT</button>
     </header>
     <main class="rate-main">
         <div id="rating-container" class="rating-card">
