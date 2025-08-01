@@ -4,7 +4,8 @@
   "description": "Basic Node.js server for League Tierlist site",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "tunnel": "ngrok http --url=complete-sloth-ultimately.ngrok-free.app 3000"
   },
   "dependencies": {
     "express": "^4.18.2"
