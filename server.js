@@ -24,6 +24,9 @@ function pickRandomSkin() {
 
 app.post('/api/sync/toggle', (req, res) => {
   const { enabled, user } = req.body;
+  if (!USERS.includes(user)) {
+    return res.status(400).json({ error: 'Invalid user' });
+  }
   if (enabled) {
     syncState.participants.add(user);
     if (!syncState.enabled) {
@@ -45,24 +48,47 @@ app.post('/api/sync/toggle', (req, res) => {
       syncState.waiting = new Set(syncState.participants);
     }
   }
-  res.json({ enabled: syncState.enabled, skin: syncState.current, waitingFor: Array.from(syncState.waiting) });
+  res.json({
+    enabled: syncState.enabled,
+    skin: syncState.current,
+    waitingFor: Array.from(syncState.waiting),
+    participants: Array.from(syncState.participants)
+  });
 });
 
 app.get('/api/sync/current', (req, res) => {
   if (!syncState.enabled) return res.json({ enabled: false });
-  res.json({ enabled: true, skin: syncState.current, waitingFor: Array.from(syncState.waiting) });
+  res.json({
+    enabled: true,
+    skin: syncState.current,
+    waitingFor: Array.from(syncState.waiting),
+    participants: Array.from(syncState.participants)
+  });
 });
 
 app.post('/api/sync/rate', (req, res) => {
   if (!syncState.enabled) return res.json({ enabled: false });
   const { user } = req.body;
+  if (!USERS.includes(user)) {
+    return res.status(400).json({ error: 'Invalid user' });
+  }
   syncState.waiting.delete(user);
   if (syncState.waiting.size === 0) {
     syncState.current = pickRandomSkin();
     syncState.waiting = new Set(syncState.participants);
-    return res.json({ enabled: true, nextSkin: syncState.current });
+    return res.json({
+      enabled: true,
+      nextSkin: syncState.current,
+      waitingFor: Array.from(syncState.waiting),
+      participants: Array.from(syncState.participants)
+    });
   }
-  res.json({ enabled: true, waiting: true });
+  res.json({
+    enabled: true,
+    waiting: true,
+    waitingFor: Array.from(syncState.waiting),
+    participants: Array.from(syncState.participants)
+  });
 });
 
 app.listen(PORT, () => {

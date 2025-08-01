@@ -16,6 +16,22 @@
         let syncMode = false;
         let waitingInterval = null;
 
+        function renderSessionUsers(participants = [], waitingFor = []) {
+            const container = document.getElementById('session-users');
+            container.innerHTML = '';
+            participants.forEach(name => {
+                const span = document.createElement('span');
+                span.textContent = name;
+                span.classList.add(waitingFor.includes(name) ? 'waiting' : 'rated');
+                container.appendChild(span);
+            });
+            if (participants.length) {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
         function getCurrentUser() {
             return localStorage.getItem('currentUser');
         }
@@ -71,9 +87,11 @@
                 syncMode = false;
                 localStorage.setItem('syncMode', 'false');
                 showNextSkin();
+                renderSessionUsers([], []);
                 return;
             }
             updateDomForSkin(data.skin);
+            renderSessionUsers(data.participants, data.waitingFor);
         }
 
         function startPolling() {
@@ -87,14 +105,16 @@
                     syncMode = false;
                     localStorage.setItem('syncMode', 'false');
                     showNextSkin();
+                    renderSessionUsers([], []);
                     return;
                 }
-                const meWaiting = data.waitingFor.includes(getCurrentUser());
                 const skinChanged = currentSkin && data.skin.image !== currentSkin.image;
-                if (!meWaiting || skinChanged) {
+                renderSessionUsers(data.participants, data.waitingFor);
+                if (skinChanged) {
                     clearInterval(waitingInterval);
                     waitingInterval = null;
                     document.getElementById('wait-message').classList.add('hidden');
+                    renderSessionUsers([], []);
                     updateDomForSkin(data.skin);
                 }
             }, 1000);
@@ -118,8 +138,10 @@
                 } else {
                     await fetchSyncSkin();
                 }
+                renderSessionUsers(data.participants, data.waitingFor);
             } else {
                 showNextSkin();
+                renderSessionUsers([], []);
             }
         }
         async function rateSkin(ratingValue) {
@@ -144,19 +166,23 @@
                     container.classList.remove('rated');
                     if (data.nextSkin) {
                         updateDomForSkin(data.nextSkin);
+                        renderSessionUsers(data.participants, data.waitingFor);
                     } else if (data.waiting) {
                         document.getElementById('wait-message').classList.remove('hidden');
+                        renderSessionUsers(data.participants, data.waitingFor);
                         startPolling();
                     } else {
                         showNextSkin();
+                        renderSessionUsers([], []);
                     }
                 }, 400);
-            } else {
-                setTimeout(() => {
-                    container.classList.remove('rated');
-                    showNextSkin();
-                }, 400);
-            }
+           } else {
+               setTimeout(() => {
+                   container.classList.remove('rated');
+                   showNextSkin();
+                    renderSessionUsers([], []);
+               }, 400);
+           }
         }
         window.addEventListener('DOMContentLoaded', () => {
             const buttons = document.querySelectorAll('.rating-buttons button');
@@ -199,6 +225,7 @@
                 <button>Perfect</button>
             </div>
             <div id="wait-message" class="waiting-message hidden"><span class="spinner"></span>Waiting for others...</div>
+            <div id="session-users" class="session-users hidden"></div>
         </div>
         <div id="finished-container" class="finished" style="display:none;">
             <h2>All skins have been rated!</h2>

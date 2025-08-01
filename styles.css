@@ -234,6 +234,20 @@ button:hover {
     font-weight: bold;
 }
 
+.session-users {
+    margin-top: 0.3rem;
+    font-size: 0.9rem;
+}
+.session-users span {
+    margin-right: 0.4rem;
+}
+.session-users .waiting {
+    color: #f85149;
+}
+.session-users .rated {
+    color: #6fdd8b;
+}
+
 .spinner {
     display: inline-block;
     width: 16px;
